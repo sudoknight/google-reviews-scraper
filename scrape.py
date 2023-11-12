@@ -50,6 +50,17 @@ def load_config():
         print(f"Unable to use config.yml. {tb}")
 
 
+def setup_logging():
+    if not os.path.isdir("logs"):
+        os.mkdir("logs")
+
+    logging.basicConfig(
+        filename=f"logs/{datetime.now()}.log",
+        level=logging.DEBUG,
+        format="%(asctime)s [%(filename)s] %(levelname)s: %(message)s",
+    )
+
+
 ##########################################################
 # ******** Utility and Parsing Methods ********
 ##########################################################
@@ -603,15 +614,10 @@ def run(
         save_metadata_to_disk: Whether to save the metadata "overall rating etc" to a local file
     """
     load_config()
+    setup_logging()
 
     global stop_criteria
     t1 = time.time()
-
-    logging.basicConfig(
-        filename=f"logs/{datetime.now()}.log",
-        level=logging.DEBUG,
-        format="%(asctime)s [%(filename)s] %(levelname)s: %(message)s",
-    )
 
     browser = playwright.chromium.launch(
         headless=False,

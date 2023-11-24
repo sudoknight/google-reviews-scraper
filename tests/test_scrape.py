@@ -1,5 +1,5 @@
 import pytest
-import scrape
+import core.scrape as scrape
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 

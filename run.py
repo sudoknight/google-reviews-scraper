@@ -1,7 +1,9 @@
 import typer
-from scrape import run
-from typing_extensions import Annotated
 from playwright.sync_api import sync_playwright
+from typing_extensions import Annotated
+
+from core.data_models import Input
+from core.scrape import run
 
 app = typer.Typer()
 
@@ -25,6 +27,20 @@ def execute(
             rich_help_panel="Secondary Arguments",
         ),
     ] = -1,
+    stop_criteria_username: Annotated[
+        str,
+        typer.Option(
+            help="username of the review. Stop further scraping when review of this username is found",
+            rich_help_panel="Secondary Arguments",
+        ),
+    ] = None,
+    stop_criteria_review: Annotated[
+        str,
+        typer.Option(
+            help="Review text to find. Stop further scraping when given username and review is found",
+            rich_help_panel="Secondary Arguments",
+        ),
+    ] = None,
     save_review_to_disk: Annotated[
         bool,
         typer.Argument(
@@ -40,15 +56,25 @@ def execute(
         ),
     ] = True,
 ):
+    input_params = {
+        "search_term": search_term,
+        "sort_by": sort_by,
+        "n_reviews": n_reviews,
+        "save_review_to_disk": save_review_to_disk,
+        "save_metadata_to_disk": save_metadata_to_disk,
+    }
+
+    if stop_criteria_username:
+        stop = {"username": stop_criteria_username}
+
+        if stop_criteria_review:
+            stop["review_text"] = stop_criteria_review
+
+        input_params["stop_critera"] = stop
+
+    input_params = Input(**input_params)
     with sync_playwright() as playwright:
-        ls_reviews = run(
-            playwright,
-            search_term=search_term,
-            sort_by=sort_by,
-            n_reviews=n_reviews,
-            save_review_to_disk=save_review_to_disk,
-            save_metadata_to_disk=save_metadata_to_disk,
-        )
+        ls_reviews = run(playwright, input_params)
         print(f"Scrapping Complete: Total Reviews  {len(ls_reviews)}")
 
 

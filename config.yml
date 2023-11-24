@@ -1,5 +1,1 @@
 output_dir: "output"
-
-stop_criteria:
-  name: ""
-  review: ""

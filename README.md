@@ -68,10 +68,10 @@ This file contains review text and related fields. The produced fields are:
 
 | Field             | Description                                                         |
 | ----------------- | ------------------------------------------------------------------- |
-| full_review       | Complete review text including the original review and Translation by Google |
+| full_review       | If user's text is in language other than the english, then this field will contain both original and translated text. And it will be null if user's original text is in english.|
 | rating_tags       | Score given to different aspects by the user such as "Rooms 5.0, Service 5.0, Location 5.0" |
-| eng_ver           | English translation of the review by Google. It usually starts with (Translated by Google). |
-| original_ver      | Original text of the review (In user's own language) |
+| en_lang_text      | English translation of the review by Google, Or the original review text, in case user's language is english |
+| other_lang_text   | Original text of the review (In user's own language). It will be null if review is already in english |
 | owner_resp_text   | Response text posted by the business owner |
 | owner_resp_time   | Date of the business owner's review response |
 | username          | Name of reviewer/contributor |
@@ -79,9 +79,19 @@ This file contains review text and related fields. The produced fields are:
 | date              | Date when the review was posted in humanized format (e.g a day ago, 5 months ago ...) |
 | date1             | Date when the review was posted in date/time format "*%m-%d-%Y %H:%M:%S*" (e.g 05-21-2023 15:46:22) |
 | review_site       | Site on which the review was posted such as Google, Priceline ... |
-| rating            | Rating given by the reviewer (e.g 4/5) |
+| rating_score      | Rating given by the reviewer (e.g 4) |
+| total_rating_score| Total rating score (e.g 5) So it will be 4/5 |
 | stay_type         | Type of stay (e.g Holiday ❘ Family) |
 | review_images     | URLs of review images posted by the reviewer |
+
+
+## Reviews are opened in two ways
+When we google any place and click on the "view reviews" link/button, Reviews can be opened in two modes.
+1. They are opened in a new screen. Its like a full screen mode you can easily scroll the reviews. 
+
+2. They are open in a dialog box. And you have to scroll inside that dialog box to scrape the reviews.
+
+There are differences in review text formating in these two modes. For example, In (1) we can see (Original) text and (Translated by Google) text, as part of the displayed review text. Where as in (1) we have to click the "show original" button to see the original review text.
 
 
 ## Config
@@ -90,9 +100,6 @@ The structure of the yml files should be the following
 ```yml
 output_dir: "<my_output_directory_path>"
 
-stop_criteria:
-  name: ""
-  review: ""
 ```
 - output_dir: The directory where the output file/folders will be created
 - stop_criteria: reviewer/contributer to find. Rather than scraping all the reviews until the end, terminate the scraping process when this username/review is encountered.

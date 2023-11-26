@@ -907,9 +907,9 @@ def dialog_box_parse_review_objs(
                     ].strip()
 
                     # Check response is expandable with "More"
-                    if current_review_obj.locator(
+                    if len(current_review_obj.locator(
                         f"{xpath_owner_response}/div[2]/span[2]"
-                    ).first.is_visible():
+                    ).all()):
                         owner_resp_text = _validate(
                             current_review_obj.locator(
                                 f"{xpath_owner_response}/div[2]/span[2]"
@@ -1343,7 +1343,6 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
     browser = playwright.chromium.launch(
         headless=False,
         args=["--start-maximized"]
-        # proxy={'server': 'proxy url'}
     )
 
     context = browser.new_context()
@@ -1366,7 +1365,6 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
                 beepy.beep(sound=4)
                 break
 
-    # page.wait_for_load_state("networkidle", timeout=30000)
     time.sleep(2)
 
     page.locator('//textarea[@aria-label="Search" or @aria-label="بحث"]').first.fill(
@@ -1375,7 +1373,6 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
 
     page.keyboard.press("Enter")
 
-    # page.wait_for_load_state("networkidle", timeout=30000)
     time.sleep(5)
 
     locator_eng_lan_button = page.locator("//a[contains(., 'Change to English')]").first
@@ -1386,10 +1383,6 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
     )
     if locator_eng_lan_button.is_visible(timeout=10000):
         locator_eng_lan_button.click()
-
-    # wait for review button
-
-    # page.locator('//span[text()="View all reviews"]').first.wait_for(timeout=100000)
 
     # *** Check which review button is present ***
 
@@ -1419,8 +1412,6 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
         ls_reviews, iter_idx_scroll, total_review_divs = reviews_in_dialog_box(
             page, input_params
         )
-
-    _ = input("Finish")
 
     logging.info(
         f"Scrapping Complete   {len(ls_reviews)}   [Scroll_Window: {iter_idx_scroll}/{total_review_divs}]"

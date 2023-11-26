@@ -5,3 +5,4 @@ notebooks
 logs
 tmp*
 .DS_Store
+*.html

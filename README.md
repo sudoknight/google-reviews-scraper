@@ -77,7 +77,7 @@ This file contains review text and related fields. The produced fields are:
 | username          | Name of reviewer/contributor |
 | user_profile      | URL of reviewer/contributor profile |
 | date              | Date when the review was posted in humanized format (e.g a day ago, 5 months ago ...) |
-| date1             | Date when the review was posted in date/time format "*%m-%d-%Y %H:%M:%S*" (e.g 05-21-2023 15:46:22) |
+| review_post_date             | Date when the review was posted in date/time format "*%m-%d-%Y %H:%M:%S*" (e.g 05-21-2023 15:46:22) |
 | review_site       | Site on which the review was posted such as Google, Priceline ... |
 | rating_score      | Rating given by the reviewer (e.g 4) |
 | total_rating_score| Total rating score (e.g 5) So it will be 4/5 |

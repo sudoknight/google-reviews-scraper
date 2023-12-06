@@ -972,7 +972,7 @@ def dialog_box_parse_review_objs(
                 "username": name,
                 "user_profile": user_profile,
                 "date": date,
-                "date1": date1,
+                "review_post_date": date1,
                 "review_site": review_site,
                 "rating_score": rating,
                 "total_rating_score": total_rating,

@@ -15,6 +15,7 @@ from dateutil.relativedelta import relativedelta
 from playwright.sync_api import Locator, Page, Playwright, expect
 
 from core.data_models import Input, StopCritera
+from core.utils.playwright import is_the_element_visible
 
 DT = str(datetime.now())
 LOCAL_OUTPUT_PATH = "{output_dir}/{entity_name}_" + DT
@@ -214,23 +215,20 @@ def full_scrn_extract_overall_rating(page: Page) -> dict:
     Returns:
         Overall ratting and number of reviews
     """
-    expect(
-        page.locator(
-            "//div[contains(@aria-label, 'out of 5 stars') and @role='text']"
-        ).first
-    ).to_be_attached(timeout=100000)
-    expect(
-        page.locator(
-            "//div[contains(@aria-label, '5-star reviews') and @role='text']"
-        ).first
-    ).to_be_attached(timeout=100000)
 
     rating = n_reviews = None
-    rating_locator = page.locator(
-        "//div[contains(@aria-label, 'out of 5 stars') and @role='text']"
-    ).first
-    if rating_locator.is_visible():
+    xpath_rating = (
+        "//div[contains(@aria-label, 'out of 5 stars from ') and @role='text']"
+    )
+
+    expect(page.locator(xpath_rating).first).to_be_attached(timeout=100000)
+    if is_the_element_visible(
+        page,
+        xpath_rating,
+        state="attached",
+    ):
         # It will extract text like this: '3.6 out of 5 stars from 206 reviews'
+        rating_locator = page.locator(f"xpath={xpath_rating}").first
         txt = rating_locator.get_attribute("aria-label")
         rating = float(txt.split(" out of ")[0])
         n_reviews = int(txt.split(" from ")[1].replace(" reviews", ""))
@@ -332,9 +330,9 @@ def full_scrn_parse_review_rating_tags(
     - There can be cases where there is only review text or only rating tags
     """
 
-    full_review = (
-        rating_tags
-    ) = en_lang_text = other_lang_text = owner_resp_time = owner_resp_text = None
+    full_review = rating_tags = en_lang_text = other_lang_text = owner_resp_time = (
+        owner_resp_text
+    ) = None
 
     ls_text = [item for item in ls_text if len(item) > 0]
 
@@ -609,9 +607,11 @@ def full_scrn_parse_review_objs(
                 timeout=100
             ):
                 ls_review_imgs = [
-                    img.get_attribute("src")
-                    if img.get_attribute("src")
-                    else img.get_attribute("data-src")
+                    (
+                        img.get_attribute("src")
+                        if img.get_attribute("src")
+                        else img.get_attribute("data-src")
+                    )
                     for img in current_review_obj.locator(
                         "xpath=" + path_review_imgs
                     ).all()
@@ -791,23 +791,11 @@ def dialog_box_parse_review_objs(
                 f"xpath=div[@data-google-review-count]/div[{idx_review}]"
             ).first
 
-            name = (
-                user_profile
-            ) = (
-                rating
-            ) = (
-                stay_type
-            ) = (
-                en_lang_text
-            ) = (
-                rating_tags
-            ) = (
+            name = user_profile = rating = stay_type = en_lang_text = rating_tags = (
                 other_lang_text
-            ) = (
-                date
-            ) = (
-                review_site
-            ) = full_review = review_images = owner_resp_text = owner_resp_time = None
+            ) = date = review_site = full_review = review_images = owner_resp_text = (
+                owner_resp_time
+            ) = None
 
             # *************START: Review Posted on Google*************
 
@@ -907,9 +895,11 @@ def dialog_box_parse_review_objs(
                     ].strip()
 
                     # Check response is expandable with "More"
-                    if len(current_review_obj.locator(
-                        f"{xpath_owner_response}/div[2]/span[2]"
-                    ).all()):
+                    if len(
+                        current_review_obj.locator(
+                            f"{xpath_owner_response}/div[2]/span[2]"
+                        ).all()
+                    ):
                         owner_resp_text = _validate(
                             current_review_obj.locator(
                                 f"{xpath_owner_response}/div[2]/span[2]"
@@ -1340,10 +1330,7 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
 
     t1 = time.time()
 
-    browser = playwright.chromium.launch(
-        headless=False,
-        args=["--start-maximized"]
-    )
+    browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
 
     context = browser.new_context()
 

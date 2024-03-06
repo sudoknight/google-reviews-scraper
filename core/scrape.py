@@ -289,7 +289,7 @@ def dialog_box_extract_overall_rating(page: Page) -> dict:
 
 def full_scrn_parse_review_rating_tags(
     ls_text: list,
-) -> Tuple[Union[str, None], Union[str, None], Union[str, None], Union[str, None]]:
+) -> dict:
     """Parses the review and extracts text and rating tags and manager/entity response.
 
     Args:
@@ -425,7 +425,7 @@ def full_scrn_parse_review_rating_tags(
     }
 
 
-def dialog_box_parse_review_rating_tags(text: str) -> Union[str, Tuple[str, str]]:
+def dialog_box_parse_review_rating_tags(text: str) -> Tuple[str, Union[str, None]]:
     """Seperates review text from the rating tags. If no rating tags are found
     original string is returned back
 
@@ -467,7 +467,7 @@ def full_scrn_parse_review_objs(
     stop_criteria: StopCritera,
     review_objs: Locator,
     scroll_iter_idx: int,
-) -> Tuple[List[dict], bool]:
+) -> Tuple[List[dict], bool, int]:
     """Parse the reviews objects in the current scroll window. Each scroll window has 10
     review objects unless we are in the last scroll window.
 
@@ -631,7 +631,7 @@ def full_scrn_parse_review_objs(
                     "username": name,
                     "user_profile": user_profile,
                     "date": date,
-                    "date1": date1,
+                    "review_post_date": date1,
                     "review_site": review_site,
                     "rating_score": rating,
                     "total_rating_score": total_rating,
@@ -1005,7 +1005,9 @@ def new_reviews_arrived(review_objs: Locator, scroll_iter_idx: int) -> Tuple[boo
 ##########################################################
 
 
-def reviews_in_full_screen(page: Page, input_params: Input) -> List[dict]:
+def reviews_in_full_screen(
+    page: Page, input_params: Input
+) -> Tuple[List[dict], int, int]:
     """When number of reviews are enough (e.g. more than 100) and they are opened in a new screen this
     method is used to scroll, scrape, and iterate on the reviews
 
@@ -1095,6 +1097,8 @@ def reviews_in_full_screen(page: Page, input_params: Input) -> List[dict]:
         '//c-wiz[@data-node-index="0;0" and @c-wiz="" and @decode-data-ved="1"]/div/div'
     ).first
 
+    stop_threahold = 10  # If new reviews are not found, then execution will stop
+    stop_counter = 0
     while True:
         # Scroll down by a small amount
 
@@ -1104,17 +1108,17 @@ def reviews_in_full_screen(page: Page, input_params: Input) -> List[dict]:
         time.sleep(2)
 
         # Check if you have reached the bottom of the page
-        at_bottom = page.evaluate(
-            "window.innerHeight + window.scrollY >= document.body.scrollHeight"
-        )
-        if at_bottom:
-            page.mouse.wheel(0, -100)
-            time.sleep(1)
-            page.mouse.wheel(0, 200)
-            time.sleep(4)
-            at_bottom = page.evaluate(
-                "window.innerHeight + window.scrollY >= document.body.scrollHeight"
-            )
+        # at_bottom = page.evaluate(
+        #     "window.innerHeight + window.scrollY >= document.body.scrollHeight"
+        # )
+        # if at_bottom:
+        #     page.mouse.wheel(0, -100)
+        #     time.sleep(1)
+        #     page.mouse.wheel(0, 200)
+        #     time.sleep(4)
+        #     at_bottom = page.evaluate(
+        #         "window.innerHeight + window.scrollY >= document.body.scrollHeight"
+        #     )
 
         new_reviews_available = new_reviews_arrived(
             locator_review_objs, iter_idx_scroll
@@ -1157,8 +1161,10 @@ def reviews_in_full_screen(page: Page, input_params: Input) -> List[dict]:
             # if stopping criteria is available, stop the scroll as soon as the target is found
             if stop_criteria_met:
                 break
+        else:
+            stop_counter += 1
 
-        if at_bottom:
+        if stop_counter >= stop_threahold:
             logging.info("Reached Bottom end can't load more reivews")
             print("Reached Bottom end can't load more reivews")
             break
@@ -1166,7 +1172,7 @@ def reviews_in_full_screen(page: Page, input_params: Input) -> List[dict]:
     return ls_reviews, iter_idx_scroll, total_review_divs
 
 
-def reviews_in_dialog_box(page: Page, input_params: Input) -> List[dict]:
+def reviews_in_dialog_box(page: Page, input_params: Input) -> Tuple[List[dict], int, int]:
     """When number of reviews are not enough (e.g. less than 100) and they are
     opened in a dialog box in the same screen. This method is used to scroll, scrape,
     and iterate on the reviews

@@ -1007,7 +1007,7 @@ def new_reviews_arrived(review_objs: Locator, scroll_iter_idx: int) -> Tuple[boo
 
 def reviews_in_full_screen(
     page: Page, input_params: Input
-) -> Tuple[List[dict], int, int]:
+) -> Tuple[List[dict], int, int, dict]:
     """When number of reviews are enough (e.g. more than 100) and they are opened in a new screen this
     method is used to scroll, scrape, and iterate on the reviews
 
@@ -1169,10 +1169,12 @@ def reviews_in_full_screen(
             print("Reached Bottom end can't load more reivews")
             break
 
-    return ls_reviews, iter_idx_scroll, total_review_divs
+    return ls_reviews, iter_idx_scroll, total_review_divs, overall_rating
 
 
-def reviews_in_dialog_box(page: Page, input_params: Input) -> Tuple[List[dict], int, int]:
+def reviews_in_dialog_box(
+    page: Page, input_params: Input
+) -> Tuple[List[dict], int, int, dict]:
     """When number of reviews are not enough (e.g. less than 100) and they are
     opened in a dialog box in the same screen. This method is used to scroll, scrape,
     and iterate on the reviews
@@ -1315,7 +1317,7 @@ def reviews_in_dialog_box(page: Page, input_params: Input) -> Tuple[List[dict], 
                 )
                 break
 
-    return ls_reviews, iter_idx_scroll, total_review_divs
+    return ls_reviews, iter_idx_scroll, total_review_divs, overall_rating
 
 
 def run(playwright: Playwright, input_params: Input) -> List[dict]:
@@ -1395,14 +1397,14 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
     if page.locator(button_type_1).first.is_visible(timeout=10000):
         logging.info("Reviews will be opened in a new screen")
         page.locator(button_type_1).first.click(timeout=50000)
-        ls_reviews, iter_idx_scroll, total_review_divs = reviews_in_full_screen(
+        ls_reviews, iter_idx_scroll, total_review_divs, overall_rating  = reviews_in_full_screen(
             page, input_params
         )
     elif page.locator(button_type_2).first.is_visible(timeout=10000):
         logging.info("Reviews will be opened in a dialog box in the same screen")
         page.locator(button_type_2).first.click(timeout=50000)
         page.set_viewport_size({"width": 1200, "height": 800})
-        ls_reviews, iter_idx_scroll, total_review_divs = reviews_in_dialog_box(
+        ls_reviews, iter_idx_scroll, total_review_divs, overall_rating = reviews_in_dialog_box(
             page, input_params
         )
 

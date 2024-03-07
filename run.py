@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import typer
 from playwright.sync_api import sync_playwright
@@ -87,7 +87,7 @@ def run_as_module(
     save_to_disk: bool,
     stop_cri_user: str = "",
     stop_cri_review: str = "",
-) -> List[dict]:
+) -> Tuple[List[dict], dict]:
     """To run the scrapper as module by third party code
 
     Args:
@@ -96,7 +96,8 @@ def run_as_module(
         n_reviews: Number of reviews to scrape from the top. -1 means scrape all. The reviews will be scraped according to the 'sort_by' option
         save_to_disk: Whether to save both metadata and reviews to disk
     """
-    ls_res = []
+    ls_res: List[dict] = []
+    overall_rating: dict = {}
 
     input_params = {
         "search_term": search_term,
@@ -116,10 +117,10 @@ def run_as_module(
 
     input_params = Input(**input_params)
     with sync_playwright() as playwright:
-        ls_res = run(playwright, input_params)
+        ls_res, overall_rating = run(playwright, input_params)
         print(f"Scrapping Complete: Total Reviews  {len(ls_res)}")
 
-    return ls_res
+    return ls_res, overall_rating
 
 
 if __name__ == "__main__":

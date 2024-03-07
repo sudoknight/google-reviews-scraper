@@ -1107,19 +1107,6 @@ def reviews_in_full_screen(
         page.mouse.wheel(0, -200)  # scroll a little up, to load new reviews
         time.sleep(2)
 
-        # Check if you have reached the bottom of the page
-        # at_bottom = page.evaluate(
-        #     "window.innerHeight + window.scrollY >= document.body.scrollHeight"
-        # )
-        # if at_bottom:
-        #     page.mouse.wheel(0, -100)
-        #     time.sleep(1)
-        #     page.mouse.wheel(0, 200)
-        #     time.sleep(4)
-        #     at_bottom = page.evaluate(
-        #         "window.innerHeight + window.scrollY >= document.body.scrollHeight"
-        #     )
-
         new_reviews_available = new_reviews_arrived(
             locator_review_objs, iter_idx_scroll
         )
@@ -1320,7 +1307,7 @@ def reviews_in_dialog_box(
     return ls_reviews, iter_idx_scroll, total_review_divs, overall_rating
 
 
-def run(playwright: Playwright, input_params: Input) -> List[dict]:
+def run(playwright: Playwright, input_params: Input) -> Tuple[List[dict], dict]:
     """
 
     Main function which launches browser instance and performs browser
@@ -1392,20 +1379,23 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
     button_type_1 = "xpath=//a[contains(@href, '/travel/search?') and span[text()='View all reviews']]"
     button_type_2 = "xpath=//a[@data-is_owner='false' and @role='button' and span[contains(., ' Google reviews')]]"
 
-    ls_reviews = iter_idx_scroll = total_review_divs = None
+    ls_reviews: List[dict] = []
+    iter_idx_scroll = 0
+    total_review_divs = 0
+    overall_rating: dict = {}
     # Click reviews button
     if page.locator(button_type_1).first.is_visible(timeout=10000):
         logging.info("Reviews will be opened in a new screen")
         page.locator(button_type_1).first.click(timeout=50000)
-        ls_reviews, iter_idx_scroll, total_review_divs, overall_rating  = reviews_in_full_screen(
-            page, input_params
+        ls_reviews, iter_idx_scroll, total_review_divs, overall_rating = (
+            reviews_in_full_screen(page, input_params)
         )
     elif page.locator(button_type_2).first.is_visible(timeout=10000):
         logging.info("Reviews will be opened in a dialog box in the same screen")
         page.locator(button_type_2).first.click(timeout=50000)
         page.set_viewport_size({"width": 1200, "height": 800})
-        ls_reviews, iter_idx_scroll, total_review_divs, overall_rating = reviews_in_dialog_box(
-            page, input_params
+        ls_reviews, iter_idx_scroll, total_review_divs, overall_rating = (
+            reviews_in_dialog_box(page, input_params)
         )
 
     logging.info(
@@ -1418,4 +1408,4 @@ def run(playwright: Playwright, input_params: Input) -> List[dict]:
 
     browser.close()
 
-    return ls_reviews
+    return ls_reviews, overall_rating

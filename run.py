@@ -1,3 +1,5 @@
+from typing import List
+
 import typer
 from playwright.sync_api import sync_playwright
 from typing_extensions import Annotated
@@ -76,6 +78,48 @@ def execute(
     with sync_playwright() as playwright:
         ls_reviews = run(playwright, input_params)
         print(f"Scrapping Complete: Total Reviews  {len(ls_reviews)}")
+
+
+def run_as_module(
+    search_term: str,
+    sort_by: str,
+    n_reviews: int,
+    save_to_disk: bool,
+    stop_cri_user: str = "",
+    stop_cri_review: str = "",
+) -> List[dict]:
+    """To run the scrapper as module by third party code
+
+    Args:
+        search_term: Term to search on google
+        sort_by: sort the reviews by  [most_helpful, most_recent, highest_score or lowest_score]
+        n_reviews: Number of reviews to scrape from the top. -1 means scrape all. The reviews will be scraped according to the 'sort_by' option
+        save_to_disk: Whether to save both metadata and reviews to disk
+    """
+    ls_res = []
+
+    input_params = {
+        "search_term": search_term,
+        "sort_by": sort_by,
+        "n_reviews": n_reviews,
+        "save_review_to_disk": True if save_to_disk else False,
+        "save_metadata_to_disk": True if save_to_disk else False,
+    }
+
+    if stop_cri_user:
+        stop = {"username": stop_cri_user}
+
+        if stop_cri_review:
+            stop["review_text"] = stop_cri_review
+
+        input_params["stop_critera"] = stop
+
+    input_params = Input(**input_params)
+    with sync_playwright() as playwright:
+        ls_res = run(playwright, input_params)
+        print(f"Scrapping Complete: Total Reviews  {len(ls_res)}")
+
+    return ls_res
 
 
 if __name__ == "__main__":

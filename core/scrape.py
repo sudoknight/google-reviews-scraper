@@ -559,13 +559,10 @@ def full_scrn_parse_review_objs(
             parsed_review_text: dict = full_scrn_parse_review_rating_tags(review_text)
 
             if stop_criteria is not None:
-                stop_user =  re.sub(r'\s', "", stop_criteria.username.lower())
-                stop_text = re.sub(r'\s', "", stop_criteria.review_text.lower())
-                target = re.sub(r'\s', "", current_review_obj.inner_text().lower())
-                if (
-                    stop_user in target
-                    and stop_text[:50] in target
-                ):
+                stop_user = re.sub(r"\s", "", stop_criteria.username.lower())
+                stop_text = re.sub(r"\s", "", stop_criteria.review_text.lower())
+                target = re.sub(r"\s", "", current_review_obj.inner_text().lower())
+                if stop_user in target and stop_text[:50] in target:
                     logging.info(f"Stopping critera met")
                     return ls_reviews, True, count_google_reviews
 
@@ -654,7 +651,7 @@ def dialog_box_parse_review_objs(
     stop_criteria: StopCritera,
     review_objs: Locator,
     scroll_iter_idx: int,
-) -> Tuple[List[dict], bool]:
+) -> Tuple[List[dict], bool, int]:
     """Parse the reviews objects in the current scroll window. Each scroll window has 10
     review objects unless we are in the last scroll window.
 
@@ -945,11 +942,10 @@ def dialog_box_parse_review_objs(
             rating, total_rating = rating.split("/")
 
             if stop_criteria is not None:
-                target = current_review_obj.inner_text().lower()
-                if (
-                    stop_criteria.username.lower() in target
-                    and stop_criteria.review_text.lower() in target
-                ):
+                stop_user = re.sub(r"\s", "", stop_criteria.username.lower())
+                stop_text = re.sub(r"\s", "", stop_criteria.review_text.lower())
+                target = re.sub(r"\s", "", current_review_obj.inner_text().lower())
+                if stop_user in target and stop_text[:50] in target:
                     logging.info(f"Stopping critera met")
                     return ls_reviews, True, count_google_reviews
 

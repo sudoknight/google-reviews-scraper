@@ -1141,7 +1141,7 @@ def reviews_in_full_screen(
                     )
 
                 # TODO: remove this
-                if len(review_data) < 10:
+                if len(review_data) < 10 and len(review_data) > 0:
                     logging.debug(f'********* {review_data[-1]["username"]}*********')
 
             print(

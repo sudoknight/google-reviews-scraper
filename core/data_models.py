@@ -9,15 +9,17 @@ class StopCritera(BaseModel):
 
 
 class Input(BaseModel):
-    search_term: str = Field(..., min_length=2)
+    search_term: str = Field(min_length=2, default="")
+    google_page_url: str = Field(min_length=10, default="")
+
     sort_by: Optional[
         Literal["most_helpful", "most_recent", "highest_score", "lowest_score"]
     ] = "most_helpful"
-    n_reviews: int = (-1,)
+    n_reviews: int = -1
     stop_critera: Optional[StopCritera] = None
 
-    save_review_to_disk: bool = (True,)
-    save_metadata_to_disk: bool = (True,)
+    save_review_to_disk: bool = True
+    save_metadata_to_disk: bool = True
 
 
 # TODO: Add config model

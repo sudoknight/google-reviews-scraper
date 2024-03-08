@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class StopCritera(BaseModel):
     username: str = Field(..., min_length=1)
-    review_text: str
+    review_text: Optional[str] = ""
 
 
 class Input(BaseModel):

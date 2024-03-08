@@ -30,7 +30,6 @@ def load_config():
             LOCAL_OUTPUT_PATH = LOCAL_OUTPUT_PATH.format(
                 output_dir=config["google_output_dir"], entity_name="{entity_name}"
             )
-
             print("config.yml file loaded")
     except Exception as ex:
         tb = traceback.format_exc()

@@ -559,10 +559,12 @@ def full_scrn_parse_review_objs(
             parsed_review_text: dict = full_scrn_parse_review_rating_tags(review_text)
 
             if stop_criteria is not None:
-                target = current_review_obj.inner_text().lower()
+                stop_user =  re.sub(r'\s', "", stop_criteria.username.lower())
+                stop_text = re.sub(r'\s', "", stop_criteria.review_text.lower())
+                target = re.sub(r'\s', "", current_review_obj.inner_text().lower())
                 if (
-                    stop_criteria.username.lower() in target
-                    and stop_criteria.review_text.lower() in target
+                    stop_user in target
+                    and stop_text[:50] in target
                 ):
                     logging.info(f"Stopping critera met")
                     return ls_reviews, True, count_google_reviews

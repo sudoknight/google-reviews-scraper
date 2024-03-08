@@ -28,7 +28,7 @@ def load_config():
         with open("config.yml", "r") as file:
             config = yaml.safe_load(file)
             LOCAL_OUTPUT_PATH = LOCAL_OUTPUT_PATH.format(
-                output_dir=config["output_dir"], entity_name="{entity_name}"
+                output_dir=config["google_output_dir"], entity_name="{entity_name}"
             )
 
             print("config.yml file loaded")

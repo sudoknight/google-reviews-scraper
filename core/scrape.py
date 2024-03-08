@@ -1023,13 +1023,13 @@ def reviews_in_full_screen(
         logging.error("Hotel metadata not scraped")
         raise Exception("Hotel metadata not scraped")
 
-    overall_rating["entity_name"] = input_params.search_term
+    overall_rating["entity_name"] = input_params.place_name
 
     print(overall_rating)
 
     if input_params.save_metadata_to_disk:
         save_local_files(
-            entity_name=input_params.search_term,
+            entity_name=input_params.place_name,
             sort_by="",
             entitiy_metadata=overall_rating,
         )
@@ -1136,7 +1136,7 @@ def reviews_in_full_screen(
 
                 if input_params.save_review_to_disk:
                     save_local_files(
-                        entity_name=input_params.search_term,
+                        entity_name=input_params.place_name,
                         sort_by=input_params.sort_by,
                         ls_reviews=review_data,
                     )
@@ -1188,11 +1188,11 @@ def reviews_in_dialog_box(
         logging.error("Hotel metadata not scraped")
         raise Exception("Hotel metadata not scraped")
 
-    overall_rating["entity_name"] = input_params.search_term
+    overall_rating["entity_name"] = input_params.place_name
 
     if input_params.save_metadata_to_disk:
         save_local_files(
-            entity_name=input_params.search_term,
+            entity_name=input_params.place_name,
             sort_by="",
             entitiy_metadata=overall_rating,
         )
@@ -1281,7 +1281,7 @@ def reviews_in_dialog_box(
 
                 if input_params.save_review_to_disk:
                     save_local_files(
-                        entity_name=input_params.search_term,
+                        entity_name=input_params.place_name,
                         sort_by=input_params.sort_by,
                         ls_reviews=review_data,
                     )
@@ -1362,7 +1362,7 @@ def execute_search_term_on_google(
     time.sleep(2)
 
     page.locator('//textarea[@aria-label="Search" or @aria-label="بحث"]').first.fill(
-        input_params.search_term
+        input_params.place_name
     )
 
     page.keyboard.press("Enter")

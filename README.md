@@ -47,12 +47,13 @@ from run import run_as_module
 
 # If when you want to use the google page url
 run_as_module(
+    place_name="New York Marriott Downtown",
     google_page_url="https://www.google.com/travel/search?....",
 )
 
 # When you dont have the url, and want to search the term on google
 run_as_module(
-    search_term="New York Marriott Downtown"
+    place_name="New York Marriott Downtown"
 )
 ```
 

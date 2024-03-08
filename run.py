@@ -12,7 +12,7 @@ app = typer.Typer()
 
 @app.command()
 def execute(
-    search_term: Annotated[
+    place_name: Annotated[
         str, typer.Argument(default=..., help="Hotel/Place to seach on Google")
     ],
     sort_by: Annotated[
@@ -59,7 +59,7 @@ def execute(
     ] = True,
 ):
     input_params = {
-        "search_term": search_term,
+        "place_name": place_name,
         "sort_by": sort_by,
         "n_reviews": n_reviews,
         "save_review_to_disk": save_review_to_disk,
@@ -75,16 +75,18 @@ def execute(
         input_params["stop_critera"] = stop
 
     input_obj = Input(**input_params)
-    ls_reviews = [] 
-    overall_rating = {}
+    ls_reviews: List[dict] = []
+    overall_rating: dict = {}
     with sync_playwright() as playwright:
-        ls_reviews, overall_rating = execute_search_term_on_google(playwright, input_obj)
+        ls_reviews, overall_rating = execute_search_term_on_google(
+            playwright, input_obj
+        )
         print(f"Scrapping Complete: Total Reviews  {len(ls_reviews)}")
 
 
 def run_as_module(
+    place_name: str,
     google_page_url: str = "",
-    search_term: str = "",
     sort_by: str = "most_recent",
     n_reviews: int = -1,
     save_to_disk: bool = True,
@@ -94,30 +96,22 @@ def run_as_module(
     """To run the scrapper as module by third party code
 
     Args:
-        search_term: Term to search on google
+        place_name: Term to search on google
         sort_by: sort the reviews by  [most_helpful, most_recent, highest_score or lowest_score]
         n_reviews: Number of reviews to scrape from the top. -1 means scrape all. The reviews will be scraped according to the 'sort_by' option
         save_to_disk: Whether to save both metadata and reviews to disk
     """
     ls_res: List[dict] = []
     overall_rating: dict = {}
-    if not len(google_page_url) and not len(search_term):
-        raise Exception(
-            "Pass atleast one argument from 'google_page_url' and 'search_term' "
-        )
 
     input_params = {
+        "place_name": place_name,
+        "google_page_url": google_page_url,
         "sort_by": sort_by,
         "n_reviews": n_reviews,
         "save_review_to_disk": True if save_to_disk else False,
         "save_metadata_to_disk": True if save_to_disk else False,
     }
-    if len(search_term):
-        print("Google Search Term Received")
-        input_params["search_term"] = search_term
-    else:
-        print("Google Page Url Received")
-        input_params["google_page_url"] = google_page_url
 
     if stop_cri_user:
         stop = {"username": stop_cri_user}
@@ -129,14 +123,14 @@ def run_as_module(
 
     input_obj = Input(**input_params)
     with sync_playwright() as playwright:
-        if len(search_term):
+        if len(google_page_url):
+            print("Calling execute_visit_google_url")
+            ls_res, overall_rating = execute_visit_google_url(playwright, input_obj)
+        else:
             print("Calling execute_search_term_on_google")
             ls_res, overall_rating = execute_search_term_on_google(
                 playwright, input_obj
             )
-        else:
-            print("Calling execute_visit_google_url")
-            ls_res, overall_rating = execute_visit_google_url(playwright, input_obj)
 
         print(f"Scrapping Complete: Total Reviews  {len(ls_res)}")
 

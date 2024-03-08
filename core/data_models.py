@@ -9,7 +9,7 @@ class StopCritera(BaseModel):
 
 
 class Input(BaseModel):
-    search_term: str = Field(min_length=2, default="")
+    place_name: str = Field(..., min_length=2)
     google_page_url: str = Field(min_length=10, default="")
 
     sort_by: Optional[

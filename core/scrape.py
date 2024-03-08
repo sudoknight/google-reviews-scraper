@@ -981,7 +981,7 @@ def dialog_box_parse_review_objs(
     return ls_reviews, False, count_google_reviews
 
 
-def new_reviews_arrived(review_objs: Locator, scroll_iter_idx: int) -> Tuple[bool, int]:
+def new_reviews_arrived(review_objs: Locator, scroll_iter_idx: int) -> bool:
     """Check the availability of new review by comparing the hash of the object with
     the previous hash value
 
@@ -992,9 +992,7 @@ def new_reviews_arrived(review_objs: Locator, scroll_iter_idx: int) -> Tuple[boo
     Returns:
         in case of new review:  (True, new hash)  otherwise (False, previous hash value)
     """
-    if review_objs.locator("xpath=" + f"div[{scroll_iter_idx}]").first.is_visible(
-        timeout=100
-    ):
+    if is_the_element_visible(review_objs, f"div[{scroll_iter_idx}]", state="attached"):
         return True
     else:
         return False
@@ -1040,13 +1038,24 @@ def reviews_in_full_screen(
 
     page.wait_for_timeout(10000)
 
+    # Select filter reviews by 'Google'. Discard reviews from other sources eg Tripadvisor
+    xpath_review_src = '//div[@role="listbox" and @aria-expanded="false" and @aria-label="Review Source Options"]'
+    if is_the_element_visible(page, xpath_review_src):
+        page.locator(xpath_review_src).first.click()
+
+        time.sleep(5)
+
+        page.locator(
+            '//div[@data-value="-1" and @aria-label="Google" and @role="option"]'
+        ).first.click()
+
     # Click the "sort by" option
 
     page.locator(
         '//div[@role="listbox" and @aria-expanded="false" and @aria-label="Review Sort Options"]'
     ).first.click()
 
-    page.wait_for_timeout(30000)
+    time.sleep(5)
 
     if input_params.sort_by == "most_helpful":
         page.locator(
@@ -1094,10 +1103,10 @@ def reviews_in_full_screen(
     total_review_divs = math.ceil(total_review / 10)
 
     locator_review_objs = page.locator(
-        '//c-wiz[@data-node-index="0;0" and @c-wiz="" and @decode-data-ved="1"]/div/div'
+        '//c-wiz[@data-node-index="0;0" and @c-wiz and @jscontroller and @jsaction and @decode-data-ved="1"]/div/div'
     ).first
 
-    stop_threahold = 10  # If new reviews are not found, then execution will stop
+    stop_threahold = 5  # If new reviews are not found, then execution will stop
     stop_counter = 0
     while True:
         # Scroll down by a small amount
@@ -1150,6 +1159,7 @@ def reviews_in_full_screen(
                 break
         else:
             stop_counter += 1
+            logging.info(f"Cant load new reviews. Stop_counter: {stop_counter}")
 
         if stop_counter >= stop_threahold:
             logging.info("Reached Bottom end can't load more reivews")
@@ -1307,10 +1317,12 @@ def reviews_in_dialog_box(
     return ls_reviews, iter_idx_scroll, total_review_divs, overall_rating
 
 
-def run(playwright: Playwright, input_params: Input) -> Tuple[List[dict], dict]:
+def execute_search_term_on_google(
+    playwright: Playwright, input_params: Input
+) -> Tuple[List[dict], dict]:
     """
 
-    Main function which launches browser instance and performs browser
+    Main function which launches browser instance and performs search on google
 
     Args:
 
@@ -1408,4 +1420,64 @@ def run(playwright: Playwright, input_params: Input) -> Tuple[List[dict], dict]:
 
     browser.close()
 
+    return ls_reviews, overall_rating
+
+
+def execute_visit_google_url(
+    playwright: Playwright, input_params: Input
+) -> Tuple[Union[None, List[dict]], Union[None, dict]]:
+    """
+
+    Main function which launches browser instance and visit google page url of the hotel
+
+    Args:
+
+        playwright: Playwright instance
+        sort_by: sort the reviews by this options before starting to scrape
+        n_review: number of reviews to scrape. -1 means 'scrape all reviews'
+        save_review_to_disk: Whether to save the reviews to a local file
+        save_metadata_to_disk: Whether to save the metadata "overall rating etc" to a local file
+    """
+    load_config()
+    setup_logging()
+    ls_reviews: List[dict] = []
+    iter_idx_scroll = 0
+    total_review_divs = 0
+    overall_rating: dict = {}
+
+    t1 = time.time()
+
+    browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
+
+    context = browser.new_context()
+
+    # Open new page
+    page = context.new_page()
+
+    if len(input_params.google_page_url):
+        page.goto(input_params.google_page_url)
+    else:
+        raise Exception("Please pass a valid value for 'google_page_url'")
+
+    xpath_review_button = (
+        '//div[@aria-label="Reviews" and @id="reviews" and @role="tab"]'
+    )
+    if is_the_element_visible(page, xpath_review_button):
+        page.locator(f"xpath={xpath_review_button}").first.click(timeout=90000)
+        time.sleep(2)
+
+        ls_reviews, iter_idx_scroll, total_review_divs, overall_rating = (
+            reviews_in_full_screen(page, input_params)
+        )
+    else:
+        logging.error("Unable to find/click the Reviews button")
+
+    context.close()
+    browser.close()
+
+    logging.info(
+        f"Scrapping Complete   {len(ls_reviews)}   [Scroll_Window: {iter_idx_scroll}/{total_review_divs}]"
+    )
+
+    print(f"Completed in {time.time()-t1}")
     return ls_reviews, overall_rating

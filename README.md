@@ -14,7 +14,7 @@ A Python tool to scrape and collect Google Reviews from various businesses/Trave
 - Save reviews and metadata to your local disk
 - Easy-to-use CLI for customization
 
-## Usage
+## Usage 1
 
 Use the command-line interface (CLI) to start scraping Google Reviews. 
 
@@ -37,6 +37,24 @@ python run.py 'New York Marriott Downtown' 'most_helpful' 50
 ```
 The above command with sort the reviews by 'most_helpful' and then scrape the top 50 reviews
 
+
+## Usage 2
+
+Call this from your own code. You can use this method when you want to store the reviews in the database or want to do any other processing on the reviews
+
+```python
+from run import run_as_module
+
+# If when you want to use the google page url
+run_as_module(
+    google_page_url="https://www.google.com/travel/search?....",
+)
+
+# When you dont have the url, and want to search the term on google
+run_as_module(
+    search_term="New York Marriott Downtown"
+)
+```
 
 ## Output
 It produces two csv files in the output directory configured in the config.yml "output_dir" field. Below is the example of output path in the config.yml

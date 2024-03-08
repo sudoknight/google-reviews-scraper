@@ -1,3 +1,10 @@
+## 8-Mar-2024
+
+#### Added
+1. Method added 'run_as_module': Call scrapper from your own code
+2. Parameter added 'google_page_url': If you can url of the page you can go directly on that page instead of searching your 'term' on google
+
+
 ## 24-Nov-2023
 
 #### Added

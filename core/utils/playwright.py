@@ -2,11 +2,11 @@ import time
 from logging import Logger
 from typing import Union
 
-from playwright.sync_api import Page
+from playwright.sync_api import Locator, Page
 
 
 def is_the_element_visible(
-    page: Page,
+    page: Union[Page, Locator],
     xpath: str,
     state: str = "visible",
     timeout_ms: int = 30000,

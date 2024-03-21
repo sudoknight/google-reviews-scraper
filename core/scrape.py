@@ -230,7 +230,7 @@ def full_scrn_extract_overall_rating(page: Page) -> dict:
         rating_locator = page.locator(f"xpath={xpath_rating}").first
         txt = rating_locator.get_attribute("aria-label")
         rating = float(txt.split(" out of ")[0])
-        n_reviews = int(txt.split(" from ")[1].replace(" reviews", ""))
+        n_reviews = int(re.sub("\s|reviews|\,|\.", "",  txt.split(" from ")[1]))
 
     get_star_rating = (
         lambda star: page.locator(

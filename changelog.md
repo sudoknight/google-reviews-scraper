@@ -1,3 +1,10 @@
+## 27-Mar-2024
+
+#### Fixed
+1. added alternate xpaths for finding rating from the review
+2. While iterating on the review objects by idx, check if the review object exists or not
+
+
 ## 8-Mar-2024
 
 #### Added
@@ -6,7 +13,6 @@
 
 #### Fixed
 1. Matches first 50 characters of stop_criteria review 
-
 
 
 ## 24-Nov-2023

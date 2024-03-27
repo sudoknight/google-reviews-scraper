@@ -230,7 +230,7 @@ def full_scrn_extract_overall_rating(page: Page) -> dict:
         rating_locator = page.locator(f"xpath={xpath_rating}").first
         txt = rating_locator.get_attribute("aria-label")
         rating = float(txt.split(" out of ")[0])
-        n_reviews = int(re.sub("\s|reviews|\,|\.", "",  txt.split(" from ")[1]))
+        n_reviews = int(re.sub("\s|reviews|\,|\.", "", txt.split(" from ")[1]))
 
     get_star_rating = (
         lambda star: page.locator(
@@ -493,9 +493,16 @@ def full_scrn_parse_review_objs(
 
     for idx_review in range(1, n_reviews + 1):
         try:
-            current_review_obj: Locator = current_scroll_window.locator(
-                f"xpath=div[{idx_review}]"
-            ).first
+            current_review_obj = None
+            xpath_review_obj = f"div[{idx_review}]"
+            if is_the_element_visible(
+                current_scroll_window, xpath_review_obj, timeout_ms=1000
+            ):
+                current_review_obj: Locator = current_scroll_window.locator(
+                    f"xpath={xpath_review_obj}"
+                ).first
+            else:
+                continue
 
             name = user_profile = rating = None
 
@@ -503,7 +510,7 @@ def full_scrn_parse_review_objs(
 
             if current_review_obj.locator(
                 "xpath=" + "div[1]/div/span/a"
-            ).first.is_visible():
+            ).first.is_visible(timeout=1000):
                 # If the review is posted on google
 
                 # name of review poster
@@ -522,6 +529,11 @@ def full_scrn_parse_review_objs(
                     + '//div[contains(., "/5")][not(.//div[contains(., "/5")])]'
                 ).first.inner_text()
 
+                if "/5" not in rating:
+                    rating = current_review_obj.locator(
+                        "xpath=" + 'div/div[2][contains(., "/5")]'
+                    ).first.inner_text()
+
                 # ************* --------END-------- *************
 
             else:
@@ -536,7 +548,7 @@ def full_scrn_parse_review_objs(
                 usre_profile_locator = current_review_obj.locator(
                     "xpath=" + "div[1]/div/span/span[2]/a"
                 ).first
-                if usre_profile_locator.is_visible():
+                if usre_profile_locator.is_visible(timeout=1000):
                     user_profile = current_review_obj.locator(
                         "xpath=" + "div[1]/div/span/span[2]/a"
                     ).first.get_attribute("href")
@@ -546,6 +558,11 @@ def full_scrn_parse_review_objs(
                     "xpath="
                     + '//div[contains(., "/10")][not(.//div[contains(., "/10")])]'
                 ).first.inner_text()
+
+                if "/10" not in rating:
+                    rating = current_review_obj.locator(
+                        "xpath=" + 'div/div[2][contains(., "/10")]'
+                    ).first.inner_text()
 
                 # ************* --------END-------- *************
 

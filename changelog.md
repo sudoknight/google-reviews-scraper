@@ -32,3 +32,4 @@
 
 #### Changed
 1. 'en_lang_text' to 'en_full_review'. So that field names are same as booking scrapper
+1. 'rating_score' to 'rating'. So that field names are same as booking scrapper

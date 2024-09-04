@@ -329,7 +329,7 @@ def full_scrn_parse_review_rating_tags(
     - There can be cases where there is only review text or only rating tags
     """
 
-    full_review = rating_tags = en_lang_text = other_lang_text = owner_resp_time = (
+    full_review = rating_tags = en_full_review = other_lang_text = owner_resp_time = (
         owner_resp_text
     ) = None
 
@@ -405,19 +405,19 @@ def full_scrn_parse_review_rating_tags(
     if full_review is not None:
         if "(Original)" in full_review:
             full_review_p2 = full_review.split("(Original)")
-            en_lang_text = (
+            en_full_review = (
                 full_review_p2[0].replace("(Translated by Google)", "").strip()
             )
             other_lang_text = full_review_p2[1]
         else:
-            en_lang_text = full_review
+            en_full_review = full_review
             other_lang_text = None
             full_review = None
 
     return {
         "full_review": full_review,
         "rating_tags": rating_tags,
-        "en_lang_text": en_lang_text,
+        "en_full_review": en_full_review,
         "other_lang_text": other_lang_text,
         "owner_resp_text": owner_resp_text,
         "owner_resp_time": owner_resp_time,
@@ -806,7 +806,7 @@ def dialog_box_parse_review_objs(
                 f"xpath=div[@data-google-review-count]/div[{idx_review}]"
             ).first
 
-            name = user_profile = rating = stay_type = en_lang_text = rating_tags = (
+            name = user_profile = rating = stay_type = en_full_review = rating_tags = (
                 other_lang_text
             ) = date = review_site = full_review = review_images = owner_resp_text = (
                 owner_resp_time
@@ -836,7 +836,7 @@ def dialog_box_parse_review_objs(
                 # It means stay_type is present along with the review
 
                 xpath_review_secs = "xpath=div[1]/div[3]/div/div[1]"
-                stay_type, en_lang_text, rating_tags = review_rating_stay_type(
+                stay_type, en_full_review, rating_tags = review_rating_stay_type(
                     xpath_review_secs, current_review_obj
                 )
 
@@ -947,10 +947,10 @@ def dialog_box_parse_review_objs(
                 rating = current_review_obj.locator("xpath=a/span").first.text_content()
                 rating = _validate(rating)
 
-                en_lang_text = current_review_obj.locator(
+                en_full_review = current_review_obj.locator(
                     "xpath=a/div[2]"
                 ).first.text_content()
-                other_lang_text = en_lang_text
+                other_lang_text = en_full_review
 
                 review_site = "other"
                 # ************* --------END-------- *************
@@ -969,7 +969,7 @@ def dialog_box_parse_review_objs(
             result_obj = {
                 "full_review": full_review,
                 "rating_tags": rating_tags,
-                "en_lang_text": en_lang_text,
+                "en_full_review": en_full_review,
                 "other_lang_text": other_lang_text,
                 "owner_resp_text": owner_resp_text,
                 "owner_resp_time": owner_resp_time,

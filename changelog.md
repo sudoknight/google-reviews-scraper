@@ -26,3 +26,9 @@
 1. 'eng_ver' and 'original_ver' fields renamed to 'en_lang_text' and 'other_lang_text'
 2. Stop Critera moved from config file to CLI input parameters
 
+
+
+## 04-Sep-2024
+
+#### Changed
+1. 'en_lang_text' to 'en_full_review'. So that field names are same as booking scrapper

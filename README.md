@@ -89,7 +89,7 @@ This file contains review text and related fields. The produced fields are:
 | ----------------- | ------------------------------------------------------------------- |
 | full_review       | If user's text is in language other than the english, then this field will contain both original and translated text. And it will be null if user's original text is in english.|
 | rating_tags       | Score given to different aspects by the user such as "Rooms 5.0, Service 5.0, Location 5.0" |
-| en_lang_text      | English translation of the review by Google, Or the original review text, in case user's language is english |
+| en_full_review    | English translation of the review by Google, Or the original review text, in case user's language is english |
 | other_lang_text   | Original text of the review (In user's own language). It will be null if review is already in english |
 | owner_resp_text   | Response text posted by the business owner |
 | owner_resp_time   | Date of the business owner's review response |

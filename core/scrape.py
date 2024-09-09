@@ -10,7 +10,6 @@ import traceback
 from datetime import datetime
 from logging import Logger
 from logging.handlers import QueueHandler
-from multiprocessing import Queue
 from typing import List, Tuple, Union
 
 import beepy
@@ -1366,7 +1365,7 @@ def reviews_in_dialog_box(
 
 
 def execute_search_term_on_google(
-    playwright: Playwright, input_params: Input, log_queue: Union[Queue, None] = None
+    playwright: Playwright, input_params: Input, my_logger: Union[Logger, None] = None
 ) -> Tuple[List[dict], dict]:
     """
 
@@ -1382,13 +1381,11 @@ def execute_search_term_on_google(
     """
 
     global logger
-    if log_queue is not None:
-        # ONLY USED WHEN THERE IS A QUEUE LISTENER SOMEWHERE
-        configure_queue_logger(log_queue)
-    else:
+    if my_logger is None:
         _get_logger()
-
-    logger = logging.getLogger()
+        logger = logging.getLogger()
+    else:
+        logger = my_logger
     load_config()
 
     t1 = time.time()
@@ -1480,7 +1477,7 @@ def execute_search_term_on_google(
 
 
 def execute_visit_google_url(
-    playwright: Playwright, input_params: Input, log_queue: Union[Queue, None] = None
+    playwright: Playwright, input_params: Input, my_logger: Union[Logger, None] = None
 ) -> Tuple[Union[None, List[dict]], Union[None, dict]]:
     """
 
@@ -1495,13 +1492,12 @@ def execute_visit_google_url(
         save_metadata_to_disk: Whether to save the metadata "overall rating etc" to a local file
     """
     global logger
-    if log_queue is not None:
-        # ONLY USED WHEN THERE IS A QUEUE LISTENER SOMEWHERE
-        configure_queue_logger(log_queue)
-    else:
+    if my_logger is None:
         _get_logger()
+        logger = logging.getLogger()
+    else:
+        logger = my_logger
 
-    logger = logging.getLogger()
     load_config()
 
     ls_reviews: List[dict] = []

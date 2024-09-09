@@ -1,12 +1,12 @@
+from logging import Logger
 from multiprocessing import Queue
 from typing import List, Tuple, Union
 
 import typer
-from playwright.sync_api import sync_playwright
-from typing_extensions import Annotated
-
 from core.data_models import Input
 from core.scrape import execute_search_term_on_google, execute_visit_google_url
+from playwright.sync_api import sync_playwright
+from typing_extensions import Annotated
 
 app = typer.Typer()
 
@@ -93,7 +93,7 @@ def run_as_module(
     save_to_disk: bool = True,
     stop_cri_user: str = "",
     stop_cri_review: str = "",
-    log_queue: Union[Queue, None] = None,
+    logger: Union[Logger, None] = None,
 ) -> Tuple[List[dict], dict]:
     """To run the scrapper as module by third party code
 
@@ -128,12 +128,12 @@ def run_as_module(
         if len(google_page_url):
             print("Calling execute_visit_google_url")
             ls_res, overall_rating = execute_visit_google_url(
-                playwright, input_obj, log_queue=log_queue
+                playwright, input_obj, my_logger=logger
             )
         else:
             print("Calling execute_search_term_on_google")
             ls_res, overall_rating = execute_search_term_on_google(
-                playwright, input_obj, log_queue=log_queue
+                playwright, input_obj, my_logger=logger
             )
 
         print(f"Scrapping Complete: Total Reviews  {len(ls_res)}")

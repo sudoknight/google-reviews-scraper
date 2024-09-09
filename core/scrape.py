@@ -4,9 +4,13 @@ import math
 import os
 import pickle
 import re
+import sys
 import time
 import traceback
 from datetime import datetime
+from logging import Logger
+from logging.handlers import QueueHandler
+from multiprocessing import Queue
 from typing import List, Tuple, Union
 
 import beepy
@@ -20,6 +24,8 @@ from core.utils.playwright import is_the_element_visible
 DT = str(datetime.now())
 LOCAL_OUTPUT_PATH = "{output_dir}/{entity_name}_" + DT
 
+logger: Logger
+
 
 def load_config():
     """Loads config.yml containing output directory and stop_critera (where to stop scrolling)"""
@@ -30,21 +36,49 @@ def load_config():
             LOCAL_OUTPUT_PATH = LOCAL_OUTPUT_PATH.format(
                 output_dir=config["google_output_dir"], entity_name="{entity_name}"
             )
-            print("config.yml file loaded")
+            logger.info("config.yml file loaded")
     except Exception as ex:
         tb = traceback.format_exc()
-        print(f"Unable to use config.yml. {tb}")
+        logger.info(f"Unable to use config.yml. {tb}")
 
 
-def setup_logging():
+def configure_queue_logger(log_queue):
+    """THIS METHOD IS CALLED WHEN THE MODULE CALLING THIS SCRAPPER IS LISTENING TO LOGS FROM THE QUEUE.
+
+    Args:
+        log_queue: Queue in which the logs will be pushed. And the listerner will get them from the queue.
+    """
+    queue_handler = QueueHandler(log_queue)  # Send logs to the queue
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(queue_handler)
+
+
+def _get_logger():
     if not os.path.isdir("logs"):
         os.mkdir("logs")
 
-    logging.basicConfig(
-        filename=f"logs/{datetime.now()}.log",
-        level=logging.DEBUG,
-        format="%(asctime)s [%(filename)s] %(levelname)s: %(message)s",
-    )
+    # Create a file handler
+    file_path = f"logs/{DT}.log"
+    frmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    # Log to console
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_formatter = logging.Formatter(frmt)
+    console_handler.setFormatter(console_formatter)
+
+    # Log to file
+    file_handler = logging.FileHandler(file_path)
+    file_handler.setLevel(logging.INFO)
+    file_formatter = logging.Formatter(frmt)
+    file_handler.setFormatter(file_formatter)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
 
 
 ##########################################################
@@ -121,7 +155,7 @@ def transform_date(str_date: str) -> str:
                 return dt.strftime("%m-%d-%Y %H:%M:%S")
 
     except Exception as ex:
-        logging.error(ex)
+        logger.error(ex)
 
     return None
 
@@ -160,11 +194,11 @@ def save_local_files(
                 writer = csv.writer(file)
                 writer.writerow(entitiy_metadata.keys())
                 writer.writerow(entitiy_metadata.values())
-                print(f"Saved File: {fname1}")
+                logger.info(f"Saved File: {fname1}")
 
             except Exception as ex:
-                logging.error(ex)
-                pickle.dump(entitiy_metadata)
+                logger.error(ex)
+                pickle.dump(entitiy_metadata, file)
 
     if ls_reviews:
         write_header = True
@@ -180,11 +214,11 @@ def save_local_files(
                     writer.writerow(row.values())
 
             except Exception as ex:
-                logging.error(ex)
-                pickle.dump(entitiy_metadata)
+                logger.error(ex)
+                pickle.dump(entitiy_metadata, file)
 
 
-def save_html(html: str, name: str = "", dir: str = None):
+def save_html(html: str, name: str = "", dir: str = ""):
     """Save html file for debugging purpose"""
     try:
         path = None
@@ -196,7 +230,7 @@ def save_html(html: str, name: str = "", dir: str = None):
         with open(path, "w") as f:
             f.write(html)
     except Exception as ex:
-        print("Saving html failed: ", ex)
+        logger.info("Saving html failed: ", ex)
 
 
 ##########################################################
@@ -580,7 +614,7 @@ def full_scrn_parse_review_objs(
                 stop_text = re.sub(r"\s", "", stop_criteria.review_text.lower())
                 target = re.sub(r"\s", "", current_review_obj.inner_text().lower())
                 if stop_user in target and stop_text[:50] in target:
-                    logging.info(f"Stopping critera met")
+                    logger.info(f"Stopping critera met")
                     return ls_reviews, True, count_google_reviews
 
             # date when review was posted
@@ -657,7 +691,7 @@ def full_scrn_parse_review_objs(
             ls_reviews.append(parsed_review_text)
         except Exception as ex:
             tb = traceback.format_exc()
-            logging.error(
+            logger.error(
                 f"Unable to scrape review. Scroll window: {scroll_iter_idx}  Review_idx: {idx_review}\n{tb}"
             )
 
@@ -751,7 +785,7 @@ def dialog_box_parse_review_objs(
 
             else:
                 # There is no text in the review
-                logging.info(
+                logger.info(
                     f"No review text found window: {scroll_iter_idx}  Idx: {idx_review}"
                 )
 
@@ -963,7 +997,7 @@ def dialog_box_parse_review_objs(
                 stop_text = re.sub(r"\s", "", stop_criteria.review_text.lower())
                 target = re.sub(r"\s", "", current_review_obj.inner_text().lower())
                 if stop_user in target and stop_text[:50] in target:
-                    logging.info(f"Stopping critera met")
+                    logger.info(f"Stopping critera met")
                     return ls_reviews, True, count_google_reviews
 
             result_obj = {
@@ -988,7 +1022,7 @@ def dialog_box_parse_review_objs(
 
         except Exception as ex:
             tb = traceback.format_exc()
-            logging.error(
+            logger.error(
                 f"Unable to scrape review. Scroll window: {scroll_iter_idx}  Review_idx: {idx_review}\n{tb}"
             )
 
@@ -1034,12 +1068,12 @@ def reviews_in_full_screen(
     overall_rating: dict = full_scrn_extract_overall_rating(page)
 
     if not overall_rating:
-        logging.error("Hotel metadata not scraped")
+        logger.error("Hotel metadata not scraped")
         raise Exception("Hotel metadata not scraped")
 
     overall_rating["entity_name"] = input_params.place_name
 
-    print(overall_rating)
+    logger.info(overall_rating)
 
     if input_params.save_metadata_to_disk:
         save_local_files(
@@ -1093,7 +1127,7 @@ def reviews_in_full_screen(
 
     else:
         err = f"Invalid sort by option: {input_params.sort_by}. It must be any of these options: [most_helpful, most_recent, highest_score, lowest_score]"
-        logging.error(err)
+        logger.error(err)
         raise Exception(err)
 
     # *** Scrolling reviews ***
@@ -1157,9 +1191,9 @@ def reviews_in_full_screen(
 
                 # TODO: remove this
                 if len(review_data) < 10 and len(review_data) > 0:
-                    logging.debug(f'********* {review_data[-1]["username"]}*********')
+                    logger.debug(f'********* {review_data[-1]["username"]}*********')
 
-            print(
+            logger.info(
                 f"Scrapped Reviews: {count_all_reviews}   Google-Reviews: {count_google_reviews}   [Scroll_Window: {iter_idx_scroll}/{total_review_divs}]"
             )
             iter_idx_scroll += 1
@@ -1173,11 +1207,11 @@ def reviews_in_full_screen(
                 break
         else:
             stop_counter += 1
-            logging.info(f"Cant load new reviews. Stop_counter: {stop_counter}")
+            logger.info(f"Cant load new reviews. Stop_counter: {stop_counter}")
 
         if stop_counter >= stop_threahold:
-            logging.info("Reached Bottom end can't load more reivews")
-            print("Reached Bottom end can't load more reivews")
+            logger.info("Reached Bottom end can't load more reivews")
+            logger.info("Reached Bottom end can't load more reivews")
             break
 
     return ls_reviews, iter_idx_scroll, total_review_divs, overall_rating
@@ -1199,7 +1233,7 @@ def reviews_in_dialog_box(
     """
     overall_rating: dict = dialog_box_extract_overall_rating(page)
     if not overall_rating:
-        logging.error("Hotel metadata not scraped")
+        logger.error("Hotel metadata not scraped")
         raise Exception("Hotel metadata not scraped")
 
     overall_rating["entity_name"] = input_params.place_name
@@ -1235,7 +1269,7 @@ def reviews_in_dialog_box(
 
     else:
         err = f"Invalid sort by option: {input_params.sort_by}. It must be any of these options: [most_helpful, most_recent, highest_score, lowest_score]"
-        logging.error(err)
+        logger.error(err)
         raise Exception(err)
 
     # *** Scrolling reviews ***
@@ -1300,7 +1334,7 @@ def reviews_in_dialog_box(
                         ls_reviews=review_data,
                     )
 
-            print(
+            logger.info(
                 f"Scrapped {len(ls_reviews)}   [Scroll_Window: {iter_idx_scroll}/{total_review_divs}]"
             )
 
@@ -1319,11 +1353,11 @@ def reviews_in_dialog_box(
             # break form the loop, if the max number of retries have reached
             if reached_end_thresh > 0:
                 reached_end_thresh -= 1
-                logging.info(
+                logger.info(
                     f"Trying to load new reviews:  Retry Count={reached_end_thresh}"
                 )
             else:
-                logging.info(
+                logger.info(
                     f"Reviews End Reached. No more retries:  Retry Count={reached_end_thresh}"
                 )
                 break
@@ -1332,7 +1366,7 @@ def reviews_in_dialog_box(
 
 
 def execute_search_term_on_google(
-    playwright: Playwright, input_params: Input
+    playwright: Playwright, input_params: Input, log_queue: Union[Queue, None] = None
 ) -> Tuple[List[dict], dict]:
     """
 
@@ -1346,8 +1380,16 @@ def execute_search_term_on_google(
         save_review_to_disk: Whether to save the reviews to a local file
         save_metadata_to_disk: Whether to save the metadata "overall rating etc" to a local file
     """
+
+    global logger
+    if log_queue is not None:
+        # ONLY USED WHEN THERE IS A QUEUE LISTENER SOMEWHERE
+        configure_queue_logger(log_queue)
+    else:
+        _get_logger()
+
+    logger = logging.getLogger()
     load_config()
-    setup_logging()
 
     t1 = time.time()
 
@@ -1385,7 +1427,7 @@ def execute_search_term_on_google(
 
     locator_eng_lan_button = page.locator("//a[contains(., 'Change to English')]").first
     # If the laguage is not English
-    print(
+    logger.info(
         "locator_eng_lan_button.is_visible()",
         locator_eng_lan_button.is_visible(timeout=10000),
     )
@@ -1411,24 +1453,24 @@ def execute_search_term_on_google(
     overall_rating: dict = {}
     # Click reviews button
     if page.locator(button_type_1).first.is_visible(timeout=10000):
-        logging.info("Reviews will be opened in a new screen")
+        logger.info("Reviews will be opened in a new screen")
         page.locator(button_type_1).first.click(timeout=50000)
         ls_reviews, iter_idx_scroll, total_review_divs, overall_rating = (
             reviews_in_full_screen(page, input_params)
         )
     elif page.locator(button_type_2).first.is_visible(timeout=10000):
-        logging.info("Reviews will be opened in a dialog box in the same screen")
+        logger.info("Reviews will be opened in a dialog box in the same screen")
         page.locator(button_type_2).first.click(timeout=50000)
         page.set_viewport_size({"width": 1200, "height": 800})
         ls_reviews, iter_idx_scroll, total_review_divs, overall_rating = (
             reviews_in_dialog_box(page, input_params)
         )
 
-    logging.info(
+    logger.info(
         f"Scrapping Complete   {len(ls_reviews)}   [Scroll_Window: {iter_idx_scroll}/{total_review_divs}]"
     )
 
-    print(f"Completed in {time.time()-t1}")
+    logger.info(f"Completed in {time.time()-t1}")
 
     context.close()
 
@@ -1438,7 +1480,7 @@ def execute_search_term_on_google(
 
 
 def execute_visit_google_url(
-    playwright: Playwright, input_params: Input
+    playwright: Playwright, input_params: Input, log_queue: Union[Queue, None] = None
 ) -> Tuple[Union[None, List[dict]], Union[None, dict]]:
     """
 
@@ -1452,8 +1494,16 @@ def execute_visit_google_url(
         save_review_to_disk: Whether to save the reviews to a local file
         save_metadata_to_disk: Whether to save the metadata "overall rating etc" to a local file
     """
+    global logger
+    if log_queue is not None:
+        # ONLY USED WHEN THERE IS A QUEUE LISTENER SOMEWHERE
+        configure_queue_logger(log_queue)
+    else:
+        _get_logger()
+
+    logger = logging.getLogger()
     load_config()
-    setup_logging()
+
     ls_reviews: List[dict] = []
     iter_idx_scroll = 0
     total_review_divs = 0
@@ -1484,14 +1534,14 @@ def execute_visit_google_url(
             reviews_in_full_screen(page, input_params)
         )
     else:
-        logging.error("Unable to find/click the Reviews button")
+        logger.error("Unable to find/click the Reviews button")
 
     context.close()
     browser.close()
 
-    logging.info(
+    logger.info(
         f"Scrapping Complete   {len(ls_reviews)}   [Scroll_Window: {iter_idx_scroll}/{total_review_divs}]"
     )
 
-    print(f"Completed in {time.time()-t1}")
+    logger.info(f"Completed in {time.time()-t1}")
     return ls_reviews, overall_rating

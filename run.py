@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from multiprocessing import Queue
+from typing import List, Tuple, Union
 
 import typer
 from playwright.sync_api import sync_playwright
@@ -92,6 +93,7 @@ def run_as_module(
     save_to_disk: bool = True,
     stop_cri_user: str = "",
     stop_cri_review: str = "",
+    log_queue: Union[Queue, None] = None,
 ) -> Tuple[List[dict], dict]:
     """To run the scrapper as module by third party code
 
@@ -125,11 +127,13 @@ def run_as_module(
     with sync_playwright() as playwright:
         if len(google_page_url):
             print("Calling execute_visit_google_url")
-            ls_res, overall_rating = execute_visit_google_url(playwright, input_obj)
+            ls_res, overall_rating = execute_visit_google_url(
+                playwright, input_obj, log_queue=log_queue
+            )
         else:
             print("Calling execute_search_term_on_google")
             ls_res, overall_rating = execute_search_term_on_google(
-                playwright, input_obj
+                playwright, input_obj, log_queue=log_queue
             )
 
         print(f"Scrapping Complete: Total Reviews  {len(ls_res)}")

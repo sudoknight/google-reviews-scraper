@@ -20,7 +20,12 @@ from playwright.sync_api import Locator, Page, Playwright, expect
 from core.data_models import Input, StopCritera
 from core.utils.playwright import is_the_element_visible
 
-DT = str(datetime.now())
+DT = ""
+if "job_id" in os.environ:
+    DT = os.environ["job_id"]
+else:
+    DT = str(datetime.now())
+
 LOCAL_OUTPUT_PATH = "{output_dir}/{entity_name}_" + DT
 
 logger: Logger
